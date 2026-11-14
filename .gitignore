@@ -1,0 +1,70 @@
+# ==========================================
+# 1. SEGURIDAD Y VARIABLES DE ENTORNO (CRÍTICO)
+# ==========================================
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# ==========================================
+# 2. DEPENDENCIAS Y PAQUETES (PESADOS)
+# ==========================================
+# Node.js / React / Next.js / Vite
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Python / Flask / FastAPI / IA
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+ENV/
+
+# ==========================================
+# 3. CARPETAS DE COMPILACIÓN (BUILD)
+# ==========================================
+dist/
+build/
+out/
+.next/
+*.egg-info/
+
+# ==========================================
+# 4. EDITORES DE CÓDIGO (IDE)
+# ==========================================
+# VS Code (se recomienda ignorar la carpeta local)
+.vscode/*
+!.vscode/extensions.json
+
+# JetBrains (PyCharm, WebStorm, etc.)
+.idea/
+
+# ==========================================
+# 5. ARCHIVOS DEL SISTEMA OPERATIVO
+# ==========================================
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
+
+# ==========================================
+# 6. LOGS Y BASES DE DATOS LOCALES DE PRUEBA
+# ==========================================
+*.log
+*.sqlite
+*.sqlite3
+*.db
