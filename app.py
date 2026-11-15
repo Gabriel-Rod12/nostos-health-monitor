@@ -14,7 +14,7 @@ from src.ui_components import METRICS, render_alerts, render_astronaut_cards, re
 
 
 st.set_page_config(page_title="NOSTOS | Salud de la tripulación", page_icon="🛰️", layout="wide")
-TELEMETRY_SIMULATION_VERSION = 2
+TELEMETRY_SIMULATION_VERSION = 3
 
 
 @st.dialog("Estado de la tripulación", width="large")
@@ -55,6 +55,8 @@ def show_crew_status_dialog(events: pd.DataFrame, statuses: pd.DataFrame) -> Non
                 f"{resistance_minutes} min/24 h de ejercicio resistivo · "
                 f"cambio muscular: {muscle_change}%"
             )
+        elif parameter == "support_request":
+            parameter_label = "Solicitud de apoyo"
         else:
             parameter_label = METRICS.get(parameter, (parameter.replace("_", " ").capitalize(), ""))[0]
         with alert_columns[index % 2], st.container(border=True):
@@ -67,6 +69,80 @@ def show_crew_status_dialog(events: pd.DataFrame, statuses: pd.DataFrame) -> Non
                 st.warning("🟡 Gravedad: Precaución")
             else:
                 st.info(f"Gravedad: {severity or 'Sin especificar'}")
+
+
+@st.dialog("Check-in de bienestar psicológico", width="large")
+def show_psychological_checkin() -> None:
+    st.caption("Responde según cómo te has sentido durante las últimas 24 horas. No hay respuestas correctas o incorrectas.")
+    st.info("Es una autoevaluación de bienestar; no es un diagnóstico ni sustituye una consulta profesional. Una solicitud para hablar ahora se mostrará como petición de apoyo.")
+    with st.form("psychological_checkin_form", clear_on_submit=True):
+        astronaut_id = st.selectbox("Tripulante", ("AST-01", "AST-02", "AST-03"))
+        left, right = st.columns(2)
+        with left:
+            mood = st.slider("1. ¿Cómo describirías tu estado de ánimo?", 0, 10, 7, help="0 = muy bajo · 10 = muy bueno")
+            sleep_quality = st.slider("3. ¿Qué tan reparador fue tu sueño?", 0, 10, 7, help="0 = nada reparador · 10 = muy reparador")
+            concentration = st.slider("5. ¿Qué tan fácil te resultó concentrarte?", 0, 10, 7, help="0 = muy difícil · 10 = muy fácil")
+            crew_connection = st.slider("7. ¿Qué tan conectado/a te sentiste con la tripulación?", 0, 10, 7, help="0 = muy aislado/a · 10 = muy conectado/a")
+            recovery = st.slider("9. Después de un momento difícil, ¿qué tan bien pudiste recuperarte?", 0, 10, 7, help="0 = todavía no me recupero · 10 = me recuperé bien")
+        with right:
+            stress = st.slider("2. ¿Cuánto estrés has sentido?", 0, 10, 2, help="0 = ninguno · 10 = muy alto")
+            energy = st.slider("4. ¿Cuánta energía o descanso sientes que tienes?", 0, 10, 7, help="0 = agotado/a · 10 = muy descansado/a")
+            workload = st.slider("6. ¿Qué tan manejable te pareció la carga de trabajo?", 0, 10, 7, help="0 = nada manejable · 10 = totalmente manejable")
+            support = st.slider("8. ¿Cuánto apoyo sentiste que tenías disponible?", 0, 10, 7, help="0 = ninguno · 10 = mucho")
+        support_request = st.radio(
+            "10. ¿Te gustaría hablar con alguien del equipo médico o psicosocial?",
+            ("No por ahora", "Sí, en el próximo contacto", "Sí, me gustaría hablar ahora"),
+            index=0,
+        )
+        submitted = st.form_submit_button("Guardar check-in", type="primary", use_container_width=True)
+
+    if submitted:
+        entry = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "astronaut_id": astronaut_id,
+            "mood_score_0_10": mood,
+            "stress_score_0_10": stress,
+            "sleep_quality_0_10": sleep_quality,
+            "energy_0_10": energy,
+            "concentration_0_10": concentration,
+            "workload_manageable_0_10": workload,
+            "crew_connection_0_10": crew_connection,
+            "support_available_0_10": support,
+            "recovery_0_10": recovery,
+            "support_request": support_request,
+        }
+        checkins = st.session_state.psychological_checkins_by_astronaut
+        checkins.setdefault(astronaut_id, []).append(entry)
+        st.session_state.psychological_checkins_by_astronaut = checkins
+        st.success(f"Check-in guardado para {astronaut_id}.")
+        st.rerun()
+
+
+@st.dialog("Respuestas del check-in", width="large")
+def show_checkin_responses(entry: dict) -> None:
+    timestamp = datetime.fromisoformat(entry["timestamp"].replace("Z", "+00:00"))
+    st.caption(f"{entry['astronaut_id']} · {timestamp.strftime('%d/%m/%Y %H:%M:%S')} UTC")
+    st.info("Autoinforme de bienestar; no es un diagnóstico clínico.")
+
+    questions = (
+        ("Estado de ánimo", "mood_score_0_10"),
+        ("Estrés percibido", "stress_score_0_10"),
+        ("Calidad del sueño", "sleep_quality_0_10"),
+        ("Energía o descanso", "energy_0_10"),
+        ("Concentración", "concentration_0_10"),
+        ("Carga de trabajo manejable", "workload_manageable_0_10"),
+        ("Conexión con la tripulación", "crew_connection_0_10"),
+        ("Apoyo disponible", "support_available_0_10"),
+        ("Recuperación tras un momento difícil", "recovery_0_10"),
+    )
+    columns = st.columns(2)
+    for index, (label, key) in enumerate(questions):
+        with columns[index % 2], st.container(border=True):
+            st.caption(label)
+            st.markdown(f"### {entry[key]} / 10")
+    st.markdown("**¿Desea hablar con el equipo médico o psicosocial?**")
+    st.write(entry["support_request"])
+
 
 with st.sidebar:
     st.header("Configuración de misión")
@@ -88,6 +164,9 @@ if st.session_state.get("telemetry_simulation_version") != TELEMETRY_SIMULATION_
     st.session_state.last_telemetry_at_utc = None
     st.session_state.telemetry_latency_seconds = None
     st.session_state.telemetry_simulation_version = TELEMETRY_SIMULATION_VERSION
+
+if "psychological_checkins_by_astronaut" not in st.session_state:
+    st.session_state.psychological_checkins_by_astronaut = {}
 
 if "telemetry_history_by_environment" not in st.session_state:
     st.session_state.telemetry_history_by_environment = {}
@@ -209,11 +288,41 @@ def render_live_dashboard() -> None:
         scenario=scenario,
         seed=st.session_state.telemetry_update_number,
     )
+    latest_checkins = st.session_state.psychological_checkins_by_astronaut
+    for index, reading in update.iterrows():
+        astronaut_checkins = latest_checkins.get(str(reading["astronaut_id"]), [])
+        if astronaut_checkins:
+            latest_checkin = astronaut_checkins[-1]
+            update.at[index, "mood_score_0_10"] = latest_checkin["mood_score_0_10"]
+            update.at[index, "stress_score_0_10"] = latest_checkin["stress_score_0_10"]
+
     diagnostic_result = evaluate_crew_health(update, history, environment)
     st.session_state.telemetry_latency_seconds = perf_counter() - started_at
     st.session_state.last_telemetry_at_utc = datetime.now(timezone.utc)
     event_history = st.session_state.diagnostic_events_by_environment[environment]
-    current_events = diagnostic_result["events_df"]
+    current_events = diagnostic_result["events_df"].copy()
+    support_request_events = []
+    for astronaut_id, astronaut_checkins in latest_checkins.items():
+        if astronaut_checkins and astronaut_checkins[-1]["support_request"] == "Sí, me gustaría hablar ahora":
+            checkin = astronaut_checkins[-1]
+            support_request_events.append({
+                "event_id": f"SUPPORT-{astronaut_id}-{checkin['timestamp']}",
+                "timestamp": checkin["timestamp"],
+                "astronaut_id": astronaut_id,
+                "health_area": "Bienestar psicológico",
+                "parameter": "support_request",
+                "detected_value": checkin["support_request"],
+                "unit": "",
+                "severity": "Amarillo",
+                "reference_criteria": "Solicitud directa del astronauta en el check-in; no es un diagnóstico.",
+                "explanation": "El astronauta solicita hablar ahora con el equipo de apoyo.",
+                "recommended_action": "Contactar al equipo médico o psicosocial disponible según el protocolo de la misión.",
+            })
+    if support_request_events:
+        current_events = pd.concat(
+            [current_events, pd.DataFrame(support_request_events, columns=EVENT_COLUMNS)],
+            ignore_index=True,
+        )
     if not current_events.empty:
         event_history = pd.concat(
             [event_history, current_events], ignore_index=True,
@@ -240,6 +349,12 @@ def render_live_dashboard() -> None:
             st.session_state.selected_astronaut = selected
             st.session_state.active_view = "detail"
             st.rerun()
+        with st.container(border=True):
+            st.subheader("Check-in de bienestar psicológico")
+            st.write("Registra cómo se siente un tripulante y si desea recibir apoyo.")
+            st.caption("Las respuestas se conservan durante esta sesión. Estado de ánimo y estrés alimentan el motor de seguimiento como autoinforme.")
+            if st.button("Iniciar check-in", key="open_psychological_checkin", use_container_width=True):
+                show_psychological_checkin()
     else:
         selected_astronaut = st.session_state.selected_astronaut
         if st.button("← Volver al panel de tripulación"):
@@ -248,6 +363,21 @@ def render_live_dashboard() -> None:
 
         st.title(f"Ficha de {selected_astronaut}")
         st.caption("Especialista de Misión | Módulo: Habitación Orbital | Días en microgravedad: 42")
+        checkins = st.session_state.psychological_checkins_by_astronaut.get(selected_astronaut, [])
+        with st.expander(f"Check-ins de bienestar · {len(checkins)}", expanded=False):
+            if not checkins:
+                st.caption("Este tripulante todavía no tiene check-ins registrados.")
+            else:
+                for checkin_index, checkin in reversed(list(enumerate(checkins))):
+                    timestamp = datetime.fromisoformat(checkin["timestamp"].replace("Z", "+00:00"))
+                    date_column, summary_column, button_column = st.columns([2, 2, 1])
+                    date_column.write(timestamp.strftime("%d/%m/%Y · %H:%M UTC"))
+                    summary_column.caption(
+                        f"Ánimo {checkin['mood_score_0_10']}/10 · Estrés {checkin['stress_score_0_10']}/10"
+                    )
+                    if button_column.button("Ver", key=f"view_checkin_{selected_astronaut}_{checkin_index}"):
+                        show_checkin_responses(checkin)
+
         selected_rows = readings.loc[readings["astronaut_id"] == selected_astronaut]
         current_reading = selected_rows.iloc[-1] if not selected_rows.empty else None
         astronaut_events = current_events.loc[current_events["astronaut_id"] == selected_astronaut]
