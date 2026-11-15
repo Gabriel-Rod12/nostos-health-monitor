@@ -88,7 +88,7 @@ Cuando ya hayas creado el entorno e instalado las dependencias, solo necesitas a
 python -m streamlit run app.py
 ```
 
-### Plantemiento de la problematica 
+## Plantemiento de la problematica 
 
 Las misiones espaciales de larga duración exponen a los astronautas a condiciones como la microgravedad, la radiación, el confinamiento y el aislamiento, que pueden provocar alteraciones progresivas en su salud cardiovascular, ósea, muscular y psicológica.
 
