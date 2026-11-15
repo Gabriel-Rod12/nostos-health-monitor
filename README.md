@@ -158,4 +158,16 @@ Los resultados tienen fines de seguimiento y simulación. No constituyen un diag
 | **CIPHER (Complement of Integrated Protocols for Human Exploration Research)** | Programa de investigación que reúne 14 estudios para analizar la respuesta humana a los vuelos espaciales. Incluye evaluaciones de calcio en sangre y orina, imágenes tridimensionales del hueso (TBone2) y el uso de prendas inteligentes para registrar indicadores como frecuencia cardíaca y respiración. | Sirve como referencia para la selección de biomarcadores, la validación de indicadores y la posibilidad de integrar dispositivos vestibles en futuras versiones de NOSTOS. |
 
 
+## Referencias bibliográficas
 
+1. NASA. (2023, October 26). *Hazards of Human Spaceflight | Hazard 4: Gravity Fields*.  
+   https://www.nasa.gov/hrp/hazard-gravity-fields/
+
+2. NASA. (2024, October 23). *Risk of Altered Sensorimotor and Vestibular Function*.  
+   https://www.nasa.gov/reference/risk-of-altered-sensorimotor-and-vestibular-function/
+
+3. NASA. (2024, October 23). *Risk of Reduced Cardiorespiratory and Musculoskeletal Fitness*.  
+   https://www.nasa.gov/reference/risk-of-reduced-cardiorespiratory-and-musculoskeletal-fitness/
+
+4. NASA. (2025, September 11). *How Will Deep Space Travel Affect Artemis Astronauts’ Health and Performance?*  
+   https://www.nasa.gov/reference/archer/
