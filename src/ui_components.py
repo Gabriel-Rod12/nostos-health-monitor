@@ -416,28 +416,68 @@ def _chart_reference_band(
     return None
 
 
-def render_alerts(st: Any, events: pd.DataFrame) -> None:
-    """Render diagnostic events supplied by the diagnostics module."""
+def render_alerts(
+    st: Any,
+    events: pd.DataFrame,
+    followups: dict | None = None,
+) -> dict | None:
+    """Render selectable diagnostic cards and return the selected event."""
     st.subheader("Centro de alertas")
     if events.empty:
         st.success("No hay eventos de atención registrados en esta sesión.")
-        return
+        return None
     display = events.copy()
     if "timestamp" in display.columns:
         display = display.sort_values("timestamp", ascending=False, kind="stable")
-    display["severity"] = display["severity"].map({
+    columns = st.columns(2)
+    selected_event = None
+    followups = followups or {}
+    severity_labels = {
         "precaution": "Precaución", "critical": "Crítico",
         "Amarillo": "Precaución", "Rojo": "Crítico", "Verde": "Normal",
-    }).fillna(display["severity"])
-    display = display.rename(columns={
-        "event_id": "ID de evento", "timestamp": "Fecha y hora", "astronaut_id": "Tripulante",
-        "environment": "Ambiente", "scenario": "Escenario", "health_area": "Área",
-        "parameter": "Parámetro", "value": "Valor", "detected_value": "Valor",
-        "unit": "Unidad", "severity": "Gravedad", "reference": "Criterio de referencia",
-        "reference_criteria": "Criterio de referencia", "message": "Descripción",
-        "explanation": "Descripción", "recommendation": "Acción recomendada",
-        "recommended_action": "Acción recomendada", "source_url": "Fuente", "experimental": "Experimental",
-    })
-    preferred = ["ID de evento", "Fecha y hora", "Tripulante", "Ambiente", "Escenario", "Área", "Parámetro", "Valor", "Unidad", "Gravedad", "Descripción", "Acción recomendada", "Criterio de referencia", "Fuente", "Experimental"]
-    st.dataframe(display[[column for column in preferred if column in display.columns]], use_container_width=True, hide_index=True)
+    }
+    for index, (_, event) in enumerate(display.iterrows()):
+        event_data = event.to_dict()
+        event_key = f"{event_data.get('event_id', 'EVENTO')}|{event_data.get('timestamp', '')}"
+        severity = str(event_data.get("severity", ""))
+        parameter = str(event_data.get("parameter", "Parámetro sin especificar"))
+        if parameter == "patron_resistencia_musculo":
+            parameter_label = "Ejercicio resistivo y masa muscular estimada"
+            raw_value = str(event_data.get("detected_value", "—"))
+            resistance_part, _, muscle_part = raw_value.partition("/")
+            value = (
+                f"{resistance_part.replace('Res:', '').replace('m', '').strip()} min/24 h de ejercicio resistivo · "
+                f"cambio muscular: {muscle_part.replace('Musc:', '').replace('%', '').strip()}%"
+            )
+        elif parameter == "support_request":
+            parameter_label = "Solicitud de apoyo"
+            value = str(event_data.get("detected_value", "—"))
+        else:
+            parameter_label = METRICS.get(parameter, (parameter.replace("_", " ").capitalize(), ""))[0]
+            value = f"{event_data.get('detected_value', '—')} {event_data.get('unit', '')}".strip()
+        workflow = followups.get(event_key, {})
+        workflow_status = workflow.get("status")
+
+        with columns[index % 2], st.container(border=True):
+            st.markdown(f"**{event_data.get('astronaut_id', 'Tripulante')} · {event_data.get('health_area', 'Área sin especificar')}**")
+            st.caption(f"Parámetro: {parameter_label} · Valor: {value}")
+            if severity in {"Rojo", "critical"}:
+                st.error(f"Gravedad: {severity_labels.get(severity, severity)}")
+            elif severity in {"Amarillo", "precaution"}:
+                st.warning(f"Gravedad: {severity_labels.get(severity, severity)}")
+            else:
+                st.info(f"Gravedad: {severity_labels.get(severity, severity or 'Sin especificar')}")
+
+            status_labels = {
+                "crew_needed": "Pendiente de apoyo de crew",
+                "crew_assigned": f"Apoya {workflow.get('crew_member', 'otro tripulante')}",
+                "medical_report_ready": "Informe listo para medicina en tierra",
+                "resolved": "Seguimiento resuelto",
+            }
+            if workflow_status in status_labels:
+                st.caption(f"Seguimiento: {status_labels[workflow_status]}")
+            if st.button("Ver recomendaciones", key=f"open_alert_{event_key}", use_container_width=True):
+                selected_event = event_data
+
+    return selected_event
 
