@@ -124,13 +124,18 @@ def render_alerts(st: Any, events: pd.DataFrame) -> None:
     display = events.copy()
     if "timestamp" in display.columns:
         display = display.sort_values("timestamp", ascending=False, kind="stable")
-    display["severity"] = display["severity"].map({"precaution": "Precaución", "critical": "Crítico"}).fillna(display["severity"])
+    display["severity"] = display["severity"].map({
+        "precaution": "Precaución", "critical": "Crítico",
+        "Amarillo": "Precaución", "Rojo": "Crítico", "Verde": "Normal",
+    }).fillna(display["severity"])
     display = display.rename(columns={
         "event_id": "ID de evento", "timestamp": "Fecha y hora", "astronaut_id": "Tripulante",
         "environment": "Ambiente", "scenario": "Escenario", "health_area": "Área",
-        "parameter": "Parámetro", "value": "Valor", "unit": "Unidad", "severity": "Gravedad",
-        "reference": "Criterio de referencia", "message": "Descripción",
-        "recommendation": "Acción recomendada", "source_url": "Fuente", "experimental": "Experimental",
+        "parameter": "Parámetro", "value": "Valor", "detected_value": "Valor",
+        "unit": "Unidad", "severity": "Gravedad", "reference": "Criterio de referencia",
+        "reference_criteria": "Criterio de referencia", "message": "Descripción",
+        "explanation": "Descripción", "recommendation": "Acción recomendada",
+        "recommended_action": "Acción recomendada", "source_url": "Fuente", "experimental": "Experimental",
     })
     preferred = ["ID de evento", "Fecha y hora", "Tripulante", "Ambiente", "Escenario", "Área", "Parámetro", "Valor", "Unidad", "Gravedad", "Descripción", "Acción recomendada", "Criterio de referencia", "Fuente", "Experimental"]
     st.dataframe(display[[column for column in preferred if column in display.columns]], use_container_width=True, hide_index=True)
