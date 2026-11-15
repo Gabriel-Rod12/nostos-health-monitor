@@ -74,6 +74,50 @@ def render_crew_overview(
             st.caption(f"Actualizado: {row.get('timestamp', '—')}")
 
 
+def render_astronaut_cards(
+    st: Any,
+    readings: pd.DataFrame,
+    astronaut_status: pd.DataFrame,
+) -> str | None:
+    """Render vertically stacked crew cards and return the opened profile ID."""
+    st.subheader("Tripulación")
+    for astronaut_id in ASTRONAUT_IDS:
+        member = readings.loc[readings["astronaut_id"] == astronaut_id]
+        row = member.iloc[-1] if not member.empty else None
+        status_rows = astronaut_status.loc[astronaut_status["astronaut_id"] == astronaut_id]
+        status = status_rows.iloc[-1] if not status_rows.empty else None
+
+        with st.container(border=True):
+            heading, state = st.columns([3, 2])
+            with heading:
+                st.markdown(f"### {astronaut_id}")
+                st.caption(f"Lectura: {row.get('timestamp', '—') if row is not None else 'Sin datos'}")
+            with state:
+                if status is None:
+                    st.info("Sin evaluación")
+                elif status["status"] == "critical":
+                    st.error(f"Estado: {status['status_label']}")
+                elif status["status"] == "precaution":
+                    st.warning(f"Estado: {status['status_label']}")
+                else:
+                    st.success(f"Estado: {status['status_label']}")
+
+            quick_metrics = (
+                ("heart_rate_bpm", "Frecuencia cardíaca", " bpm"),
+                ("spo2_pct", "SpO₂", "%"),
+                ("temperature_c", "Temperatura", " °C"),
+                ("systolic_bp_mmhg", "Presión sistólica", " mmHg"),
+            )
+            metric_columns = st.columns(len(quick_metrics))
+            for column, (key, label, suffix) in zip(metric_columns, quick_metrics):
+                value = row.get(key) if row is not None else None
+                column.metric(label, _format_value(value, suffix))
+
+            if st.button("Abrir ficha completa", key=f"open_profile_{astronaut_id}", use_container_width=True):
+                return astronaut_id
+    return None
+
+
 def render_metric_groups(st: Any, reading: pd.Series | None) -> None:
     """Render all contract metrics for one astronaut, without clinical interpretation."""
     groups = {
@@ -124,13 +168,18 @@ def render_alerts(st: Any, events: pd.DataFrame) -> None:
     display = events.copy()
     if "timestamp" in display.columns:
         display = display.sort_values("timestamp", ascending=False, kind="stable")
-    display["severity"] = display["severity"].map({"precaution": "Precaución", "critical": "Crítico"}).fillna(display["severity"])
+    display["severity"] = display["severity"].map({
+        "precaution": "Precaución", "critical": "Crítico",
+        "Amarillo": "Precaución", "Rojo": "Crítico", "Verde": "Normal",
+    }).fillna(display["severity"])
     display = display.rename(columns={
         "event_id": "ID de evento", "timestamp": "Fecha y hora", "astronaut_id": "Tripulante",
         "environment": "Ambiente", "scenario": "Escenario", "health_area": "Área",
-        "parameter": "Parámetro", "value": "Valor", "unit": "Unidad", "severity": "Gravedad",
-        "reference": "Criterio de referencia", "message": "Descripción",
-        "recommendation": "Acción recomendada", "source_url": "Fuente", "experimental": "Experimental",
+        "parameter": "Parámetro", "value": "Valor", "detected_value": "Valor",
+        "unit": "Unidad", "severity": "Gravedad", "reference": "Criterio de referencia",
+        "reference_criteria": "Criterio de referencia", "message": "Descripción",
+        "explanation": "Descripción", "recommendation": "Acción recomendada",
+        "recommended_action": "Acción recomendada", "source_url": "Fuente", "experimental": "Experimental",
     })
     preferred = ["ID de evento", "Fecha y hora", "Tripulante", "Ambiente", "Escenario", "Área", "Parámetro", "Valor", "Unidad", "Gravedad", "Descripción", "Acción recomendada", "Criterio de referencia", "Fuente", "Experimental"]
     st.dataframe(display[[column for column in preferred if column in display.columns]], use_container_width=True, hide_index=True)

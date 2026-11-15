@@ -77,6 +77,14 @@ _SCENARIO_EFFECTS: dict[Scenario, dict[str, float]] = {
                   "exercise": 0, "resistance": 0, "stress": 4.2, "mood": -1.6},
 }
 
+# Casos controlados para comprobar el flujo de alertas críticas. Estos valores
+# son datos sintéticos de una emergencia de prueba, no protocolos médicos ni
+# perfiles de astronautas reales.
+_EMERGENCY_CRITICAL_OVERRIDES: dict[AstronautId, dict[str, float]] = {
+    "AST-02": {"spo2_pct": 88.0},
+    "AST-03": {"systolic_bp_mmhg": 185.0, "diastolic_bp_mmhg": 122.0},
+}
+
 
 def _validate_choice(value: str, choices: Iterable[str], name: str) -> None:
     if value not in choices:
@@ -164,7 +172,7 @@ def simulate_update(
     for astronaut_id in ASTRONAUT_IDS:
         previous = _previous_values(previous_history, astronaut_id)
         activity = np.clip(effect["activity"] + rng.normal(0, 5), 0, 100)
-        records.append({
+        record: dict[str, object] = {
             "timestamp": now.isoformat(),
             "astronaut_id": astronaut_id,
             "environment": environment,
@@ -182,7 +190,10 @@ def simulate_update(
             "sleep_hours_24h": round(float(np.clip(previous["sleep_hours_24h"] * 0.7 + (_PROFILES[astronaut_id]["sleep_hours_24h"] + mars.get("sleep", 0)) * 0.3 + rng.normal(0, 0.12), 0, 14)), 1),
             "stress_score_0_10": round(float(np.clip(previous["stress_score_0_10"] * 0.4 + (_PROFILES[astronaut_id]["stress_score_0_10"] + effect["stress"] + mars.get("stress", 0)) * 0.6 + rng.normal(0, 0.25), 0, 10)), 1),
             "mood_score_0_10": round(float(np.clip(previous["mood_score_0_10"] * 0.5 + (_PROFILES[astronaut_id]["mood_score_0_10"] + effect["mood"]) * 0.5 + rng.normal(0, 0.2), 0, 10)), 1),
-        })
+        }
+        if scenario == "emergency":
+            record.update(_EMERGENCY_CRITICAL_OVERRIDES.get(astronaut_id, {}))
+        records.append(record)
 
     update = pd.DataFrame(records, columns=VITAL_COLUMNS)
     validate_telemetry(update, require_all_astronauts=True)
@@ -208,7 +219,9 @@ def generate_initial_history(
         # The mix gives charts varied but reproducible, non-emergency baseline data.
         scenario: Scenario = "eva" if index % 8 == 5 else "rest"
         update = simulate_update(history, environment, scenario, timestamp=reading_time, seed=seed + index)
-        history = pd.concat([history, update], ignore_index=True)
+        # Avoid concatenating against the all-object empty seed frame: recent
+        # Pandas versions warn that its dtype inference will change.
+        history = update.copy() if history.empty else pd.concat([history, update], ignore_index=True)
     return history
 
 
