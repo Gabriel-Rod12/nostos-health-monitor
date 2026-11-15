@@ -33,7 +33,11 @@ def _format_value(value: Any, suffix: str) -> str:
     return f"{value}{suffix}"
 
 
-def render_crew_overview(st: Any, readings: pd.DataFrame) -> None:
+def render_crew_overview(
+    st: Any,
+    readings: pd.DataFrame,
+    astronaut_status: pd.DataFrame | None = None,
+) -> None:
     """Render the current status cards for the three crew members."""
     st.subheader("Estado de la tripulación")
     if readings.empty:
@@ -43,8 +47,24 @@ def render_crew_overview(st: Any, readings: pd.DataFrame) -> None:
     columns = st.columns(3)
     for column, astronaut_id in zip(columns, ASTRONAUT_IDS):
         member = readings.loc[readings["astronaut_id"] == astronaut_id]
+        status_row = None
+        if astronaut_status is not None and not astronaut_status.empty:
+            matches = astronaut_status.loc[astronaut_status["astronaut_id"] == astronaut_id]
+            if not matches.empty:
+                status_row = matches.iloc[-1]
         with column:
             st.markdown(f"**{astronaut_id}**")
+            if status_row is not None:
+                status = status_row["status"]
+                label = status_row["status_label"]
+                if status == "critical":
+                    st.error(f"Estado: {label}")
+                elif status == "precaution":
+                    st.warning(f"Estado: {label}")
+                elif status == "normal":
+                    st.success(f"Estado: {label}")
+                else:
+                    st.info(f"Estado: {label}")
             if member.empty:
                 st.caption("Sin lectura disponible")
                 continue
@@ -99,7 +119,19 @@ def render_alerts(st: Any, events: pd.DataFrame) -> None:
     """Render diagnostic events supplied by the diagnostics module."""
     st.subheader("Centro de alertas")
     if events.empty:
-        st.info("Sin eventos disponibles. Las alertas se mostrarán cuando el motor de diagnóstico esté conectado.")
+        st.success("No hay eventos de atención registrados en esta sesión.")
         return
-    st.dataframe(events, use_container_width=True, hide_index=True)
+    display = events.copy()
+    if "timestamp" in display.columns:
+        display = display.sort_values("timestamp", ascending=False, kind="stable")
+    display["severity"] = display["severity"].map({"precaution": "Precaución", "critical": "Crítico"}).fillna(display["severity"])
+    display = display.rename(columns={
+        "event_id": "ID de evento", "timestamp": "Fecha y hora", "astronaut_id": "Tripulante",
+        "environment": "Ambiente", "scenario": "Escenario", "health_area": "Área",
+        "parameter": "Parámetro", "value": "Valor", "unit": "Unidad", "severity": "Gravedad",
+        "reference": "Criterio de referencia", "message": "Descripción",
+        "recommendation": "Acción recomendada", "source_url": "Fuente", "experimental": "Experimental",
+    })
+    preferred = ["ID de evento", "Fecha y hora", "Tripulante", "Ambiente", "Escenario", "Área", "Parámetro", "Valor", "Unidad", "Gravedad", "Descripción", "Acción recomendada", "Criterio de referencia", "Fuente", "Experimental"]
+    st.dataframe(display[[column for column in preferred if column in display.columns]], use_container_width=True, hide_index=True)
 
