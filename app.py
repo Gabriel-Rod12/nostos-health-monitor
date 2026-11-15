@@ -7,7 +7,7 @@ import streamlit as st
 
 from src.diagnostics import EVENT_COLUMNS, evaluate_crew_health
 from src.telemetry import append_update, generate_initial_history, simulate_update
-from src.ui_components import ASTRONAUT_IDS, METRICS, render_alerts, render_crew_overview, render_metric_groups, render_trend
+from src.ui_components import METRICS, render_alerts, render_astronaut_cards, render_metric_groups, render_trend
 
 
 st.set_page_config(page_title="NOSTOS | Salud de la tripulación", page_icon="🛰️", layout="wide")
@@ -45,12 +45,10 @@ if environment not in st.session_state.diagnostic_status_by_environment:
         columns=["astronaut_id", "status", "status_label"]
     )
 
-selected_astronaut = st.selectbox("Consultar tripulante", ASTRONAUT_IDS)
-selected_metric = st.selectbox(
-    "Indicador para la tendencia",
-    tuple(METRICS),
-    format_func=lambda key: METRICS[key][0],
-)
+if "active_view" not in st.session_state:
+    st.session_state.active_view = "dashboard"
+if "selected_astronaut" not in st.session_state:
+    st.session_state.selected_astronaut = None
 
 
 @st.fragment(run_every=refresh_seconds)
@@ -86,13 +84,40 @@ def render_live_dashboard() -> None:
     readings = update
     st.caption("Telemetría simulada actualizada automáticamente; los valores no son mediciones clínicas.")
     status = st.session_state.diagnostic_status_by_environment[environment]
-    render_crew_overview(st, readings, status)
-    st.divider()
-    selected_rows = readings.loc[readings["astronaut_id"] == selected_astronaut]
-    current_reading = selected_rows.iloc[-1] if not selected_rows.empty else None
-    render_metric_groups(st, current_reading)
-    render_trend(st, history, selected_astronaut, selected_metric)
-    render_alerts(st, event_history)
+    if st.session_state.active_view == "dashboard":
+        selected = render_astronaut_cards(st, readings, status)
+        if selected is not None:
+            st.session_state.selected_astronaut = selected
+            st.session_state.active_view = "detail"
+            st.rerun()
+    else:
+        selected_astronaut = st.session_state.selected_astronaut
+        if st.button("← Volver al panel de tripulación"):
+            st.session_state.active_view = "dashboard"
+            st.rerun()
+
+        st.title(f"Ficha de {selected_astronaut}")
+        selected_rows = readings.loc[readings["astronaut_id"] == selected_astronaut]
+        current_reading = selected_rows.iloc[-1] if not selected_rows.empty else None
+        selected_status = status.loc[status["astronaut_id"] == selected_astronaut]
+        if not selected_status.empty:
+            current_status = selected_status.iloc[-1]
+            if current_status["status"] == "critical":
+                st.error(f"Estado: {current_status['status_label']}")
+            elif current_status["status"] == "precaution":
+                st.warning(f"Estado: {current_status['status_label']}")
+            else:
+                st.success(f"Estado: {current_status['status_label']}")
+
+        render_metric_groups(st, current_reading)
+        selected_metric = st.selectbox(
+            "Indicador para la tendencia",
+            tuple(METRICS),
+            format_func=lambda key: METRICS[key][0],
+        )
+        render_trend(st, history, selected_astronaut, selected_metric)
+        astronaut_events = event_history.loc[event_history["astronaut_id"] == selected_astronaut]
+        render_alerts(st, astronaut_events)
 
 
 render_live_dashboard()
