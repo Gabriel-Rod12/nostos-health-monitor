@@ -53,14 +53,17 @@ DEFAULT_HISTORY_PATH = Path(__file__).resolve().parents[1] / "data" / "astronaut
 _PROFILES: dict[AstronautId, dict[str, float]] = {
     "AST-01": {"heart_rate_bpm": 68, "spo2_pct": 98.0, "temperature_c": 36.7,
                "systolic_bp_mmhg": 116, "diastolic_bp_mmhg": 74,
+               "exercise_minutes_24h": 75, "resistance_training_minutes_24h": 36,
                "muscle_mass_kg": 43.2, "body_fat_pct": 18.1, "sleep_hours_24h": 7.4,
                "stress_score_0_10": 3.2, "mood_score_0_10": 7.5},
     "AST-02": {"heart_rate_bpm": 72, "spo2_pct": 97.6, "temperature_c": 36.8,
                "systolic_bp_mmhg": 120, "diastolic_bp_mmhg": 77,
+               "exercise_minutes_24h": 72, "resistance_training_minutes_24h": 34,
                "muscle_mass_kg": 39.8, "body_fat_pct": 22.4, "sleep_hours_24h": 7.1,
                "stress_score_0_10": 3.8, "mood_score_0_10": 7.0},
     "AST-03": {"heart_rate_bpm": 64, "spo2_pct": 98.2, "temperature_c": 36.6,
                "systolic_bp_mmhg": 112, "diastolic_bp_mmhg": 71,
+               "exercise_minutes_24h": 78, "resistance_training_minutes_24h": 38,
                "muscle_mass_kg": 46.1, "body_fat_pct": 15.7, "sleep_hours_24h": 7.7,
                "stress_score_0_10": 2.7, "mood_score_0_10": 7.8},
 }
@@ -68,10 +71,10 @@ _PROFILES: dict[AstronautId, dict[str, float]] = {
 _SCENARIO_EFFECTS: dict[Scenario, dict[str, float]] = {
     "rest": {"heart_rate_bpm": 0, "spo2_pct": 0, "temperature_c": 0,
              "systolic_bp_mmhg": 0, "diastolic_bp_mmhg": 0, "activity": 24,
-             "exercise": 15, "resistance": 5, "stress": 0, "mood": 0},
+             "exercise": 0, "resistance": 0, "stress": 0, "mood": 0},
     "eva": {"heart_rate_bpm": 24, "spo2_pct": -0.5, "temperature_c": 0.25,
             "systolic_bp_mmhg": 10, "diastolic_bp_mmhg": 6, "activity": 78,
-            "exercise": 82, "resistance": 32, "stress": 1.1, "mood": -0.2},
+            "exercise": 8, "resistance": 4, "stress": 1.1, "mood": -0.2},
     "emergency": {"heart_rate_bpm": 42, "spo2_pct": -3.0, "temperature_c": 0.6,
                   "systolic_bp_mmhg": 20, "diastolic_bp_mmhg": 12, "activity": 45,
                   "exercise": 0, "resistance": 0, "stress": 4.2, "mood": -1.6},
@@ -152,8 +155,10 @@ def simulate_update(
     """Create one simultaneous reading for each astronaut.
 
     Pass a ``seed`` and a timestamp to obtain repeatable output. Slow-moving
-    body-composition and sleep values are bounded to small steps from each
-    astronaut's latest historical reading.
+    body-composition, sleep, and 24-hour exercise totals are bounded to small
+    steps from each astronaut's latest historical reading. Selecting rest or
+    emergency changes the current activity profile without resetting the
+    rolling daily exercise totals.
     """
     _validate_choice(environment, ENVIRONMENTS, "environment")
     _validate_choice(scenario, SCENARIOS, "scenario")
@@ -171,7 +176,10 @@ def simulate_update(
 
     for astronaut_id in ASTRONAUT_IDS:
         previous = _previous_values(previous_history, astronaut_id)
+        profile = _PROFILES[astronaut_id]
         activity = np.clip(effect["activity"] + rng.normal(0, 5), 0, 100)
+        exercise_target = profile["exercise_minutes_24h"] + effect["exercise"]
+        resistance_target = profile["resistance_training_minutes_24h"] + effect["resistance"]
         record: dict[str, object] = {
             "timestamp": now.isoformat(),
             "astronaut_id": astronaut_id,
@@ -183,8 +191,8 @@ def simulate_update(
             "systolic_bp_mmhg": round(max(70, _PROFILES[astronaut_id]["systolic_bp_mmhg"] + effect["systolic_bp_mmhg"] + rng.normal(0, 3))),
             "diastolic_bp_mmhg": round(max(40, _PROFILES[astronaut_id]["diastolic_bp_mmhg"] + effect["diastolic_bp_mmhg"] + rng.normal(0, 2))),
             "activity_score_0_100": round(float(activity), 1),
-            "exercise_minutes_24h": round(float(np.clip(effect["exercise"] + rng.normal(0, 8), 0, 180)), 1),
-            "resistance_training_minutes_24h": round(float(np.clip(effect["resistance"] + rng.normal(0, 5), 0, 120)), 1),
+            "exercise_minutes_24h": round(float(np.clip(previous["exercise_minutes_24h"] * 0.85 + exercise_target * 0.15 + rng.normal(0, 0.6), 0, 180)), 1),
+            "resistance_training_minutes_24h": round(float(np.clip(previous["resistance_training_minutes_24h"] * 0.85 + resistance_target * 0.15 + rng.normal(0, 0.3), 0, 120)), 1),
             "muscle_mass_kg": round(float(previous["muscle_mass_kg"] + rng.normal(0, 0.012)), 2),
             "body_fat_pct": round(float(np.clip(previous["body_fat_pct"] + rng.normal(0, 0.008), 5, 45)), 2),
             "sleep_hours_24h": round(float(np.clip(previous["sleep_hours_24h"] * 0.7 + (_PROFILES[astronaut_id]["sleep_hours_24h"] + mars.get("sleep", 0)) * 0.3 + rng.normal(0, 0.12), 0, 14)), 1),
