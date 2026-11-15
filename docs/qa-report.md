@@ -82,30 +82,4 @@ Se observó una acumulación de puntos al final de algunas gráficas.
 
 Se requiere investigar si está relacionada con los intervalos de actualización de la telemetría o con posibles lecturas duplicadas.
 
-### H4. Historial de eventos
 
-Se mantiene pendiente la revisión del comportamiento del historial cronológico de eventos y la conservación de alertas anteriores.
-
-## 6. Estado de las actividades de QA
-
-- [x] Configuración del entorno Python.
-- [x] Instalación de dependencias de desarrollo.
-- [x] Ejecución de pruebas automatizadas.
-- [x] Verificación de telemetría.
-- [x] Verificación del módulo de diagnóstico mediante pruebas.
-- [x] Comprobación del flujo de integración mediante pruebas.
-- [x] Inicio de la aplicación Streamlit.
-- [x] Registro de hallazgos funcionales y visuales.
-- [ ] Revisión del historial cronológico de eventos.
-- [ ] Seguimiento de las correcciones realizadas por los responsables.
-- [ ] Ejecución de pruebas de regresión después de las modificaciones.
-
-## 7. Conclusión
-
-Las 14 pruebas automatizadas existentes finalizaron satisfactoriamente en el entorno local. Asimismo, se comprobó que la aplicación puede iniciarse correctamente mediante Streamlit.
-
-Durante la revisión visual se identificaron aspectos que requieren seguimiento, especialmente el comportamiento de las alertas durante el reposo, el contraste de los indicadores y la visualización de las tendencias.
-
-Este informe documenta el estado de las verificaciones realizadas el 15 de noviembre de 2026. Los hallazgos pendientes no se consideran corregidos hasta completar su comprobación.
-
----
