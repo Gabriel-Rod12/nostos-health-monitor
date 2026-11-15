@@ -15,9 +15,13 @@ Nota metodológica:
     definitivos (ni trastornos psicológicos) ni prescripciones farmacológicas.
 """
 
+from __future__ import annotations
+
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
+
 
 
 # ==============================================================================
@@ -44,7 +48,7 @@ REQUIRED_INPUT_COLUMNS: List[str] = [
     "mood_score_0_10",
 ]
 
-EVENT_COLUMNS: List[str] = [
+EVENT_COLUMNS: tuple = (
     "event_id",
     "timestamp",
     "astronaut_id",
@@ -56,13 +60,49 @@ EVENT_COLUMNS: List[str] = [
     "reference_criteria",
     "explanation",
     "recommended_action",
-]
+)
+
+# Columnas del DataFrame de estado por astronauta devuelto por evaluate_readings.
+STATUS_COLUMNS: tuple = (
+    "astronaut_id",
+    "timestamp",
+    "environment",
+    "scenario",
+    "status",
+    "overall_status_es",
+    "bone_risk_index_simulated",
+    "muscle_mass_change_pct",
+    "psychological_load_index_simulated",
+)
+
+# Mapeo de etiquetas de severidad en español a valores canónicos en inglés.
+_SEVERITY_EN: Dict[str, str] = {
+    "Verde": "normal",
+    "Amarillo": "precaution",
+    "Rojo": "critical",
+}
 
 SEVERITY_PRIORITY: Dict[str, int] = {
     "Verde": 0,
     "Amarillo": 1,
     "Rojo": 2,
 }
+
+
+@dataclass
+class DiagnosticResult:
+    """Resultado estructurado de evaluate_readings().
+
+    Attributes:
+        astronaut_status: DataFrame con una fila por astronauta y columnas STATUS_COLUMNS.
+        events: DataFrame con un evento por alerta y columnas EVENT_COLUMNS.
+        crew_summary: Resumen general del estado de la tripulación.
+    """
+
+    astronaut_status: pd.DataFrame
+    events: pd.DataFrame
+    crew_summary: Dict[str, Any]
+
 
 
 # ==============================================================================
@@ -223,8 +263,7 @@ def _build_event(
     explanation: str,
     recommended_action: str,
 ) -> Dict[str, Any]:
-    ts_clean = str(timestamp).replace(" ", "_").replace(":", "").replace("-", "")
-    event_id = f"EVT-{astronaut_id}-{parameter.upper()}-{ts_clean}"
+    event_id = f"EVT-{astronaut_id}-{parameter.upper()}"
     return {
         "event_id": event_id,
         "timestamp": str(timestamp),
@@ -1043,7 +1082,7 @@ def evaluate_crew_health(
         if result["overall_status"] == "Rojo":
             critical_astronauts.append(astro_id)
 
-    events_df = pd.DataFrame(all_events, columns=EVENT_COLUMNS) if all_events else pd.DataFrame(columns=EVENT_COLUMNS)
+    events_df = pd.DataFrame(all_events, columns=list(EVENT_COLUMNS)) if all_events else pd.DataFrame(columns=list(EVENT_COLUMNS))
 
     return {
         "crew_summary": {
@@ -1056,3 +1095,121 @@ def evaluate_crew_health(
         "events": all_events,
         "events_df": events_df,
     }
+
+
+# ==============================================================================
+# 7. NUEVA INTERFAZ PÚBLICA — evaluate_readings()
+#    Requerida por tests/test_diagnostics.py y tests/test_integration.py.
+#    Envuelve evaluate_crew_health() y convierte su salida al contrato de datos
+#    tipado que esperan las pruebas de integración.
+# ==============================================================================
+
+def evaluate_readings(
+    current_df: pd.DataFrame,
+    history: Optional[pd.DataFrame] = None,
+    environment: Optional[str] = None,
+) -> DiagnosticResult:
+    """Interfaz principal orientada a pruebas e integración.
+
+    Valida las entradas, delega en ``evaluate_crew_health`` y convierte la
+    salida en un ``DiagnosticResult`` tipado con:
+
+    * ``astronaut_status`` — DataFrame con columnas ``STATUS_COLUMNS``.
+    * ``events``           — DataFrame con columnas ``EVENT_COLUMNS``.
+    * ``crew_summary``     — dict con métricas globales de la tripulación.
+
+    Raises:
+        ValueError: Si algún astronauta aparece más de una vez en current_df.
+        ValueError: Si el argumento ``environment`` no coincide con el valor de
+                    la columna ``environment`` del DataFrame.
+        ValueError: Si el timestamp de alguna lectura actual es anterior al
+                    timestamp más reciente del historial.
+    """
+    # --- Validación 1: sin filas duplicadas por astronauta -------------------------
+    if not current_df.empty and "astronaut_id" in current_df.columns:
+        duplicates = current_df["astronaut_id"].value_counts()
+        duplicated_ids = duplicates[duplicates > 1].index.tolist()
+        if duplicated_ids:
+            raise ValueError(
+                f"evaluate_readings recibió at most one current row por astronauta, "
+                f"pero encontró duplicados: {duplicated_ids}."
+            )
+
+    # --- Validación 2: coherencia del argumento environment -----------------------
+    if (
+        environment is not None
+        and not current_df.empty
+        and "environment" in current_df.columns
+    ):
+        df_envs = current_df["environment"].unique().tolist()
+        norm_arg = _normalize_environment(environment)
+        for df_env in df_envs:
+            if _normalize_environment(df_env) != norm_arg:
+                raise ValueError(
+                    f"El argumento environment='{environment}' does not match "
+                    f"el valor '{df_env}' encontrado en el DataFrame."
+                )
+
+    # --- Validación 3: timestamp actual no anterior al historial ------------------
+    if (
+        history is not None
+        and not history.empty
+        and "timestamp" in history.columns
+        and not current_df.empty
+        and "timestamp" in current_df.columns
+    ):
+        hist_max = pd.to_datetime(history["timestamp"], utc=True, errors="coerce").max()
+        curr_min = pd.to_datetime(current_df["timestamp"], utc=True, errors="coerce").min()
+        if pd.notna(hist_max) and pd.notna(curr_min) and curr_min < hist_max:
+            raise ValueError(
+                f"El timestamp de la lectura actual ({curr_min}) predates the supplied history "
+                f"(máximo histórico: {hist_max})."
+            )
+
+    # --- Delegación en la lógica existente ----------------------------------------
+    raw = evaluate_crew_health(
+        current_df=current_df,
+        history_df=history,
+        environment=environment,
+    )
+
+    # --- Conversión a DiagnosticResult -------------------------------------------
+    astro_rows: List[Dict[str, Any]] = []
+    for astro_id, astro_result in raw["astronaut_status"].items():
+        overall_es = astro_result.get("overall_status", "Verde")
+        status_en = _SEVERITY_EN.get(overall_es, "unassessed")
+        derived = astro_result.get("derived_metrics", {})
+        astro_rows.append({
+            "astronaut_id": astro_id,
+            "timestamp": astro_result.get("timestamp", ""),
+            "environment": astro_result.get("environment", ""),
+            "scenario": astro_result.get("scenario", ""),
+            "status": status_en,
+            "overall_status_es": overall_es,
+            "bone_risk_index_simulated": derived.get("bone_risk_index_simulated"),
+            "muscle_mass_change_pct": derived.get("muscle_mass_change_pct"),
+            "psychological_load_index_simulated": derived.get("psychological_load_index_simulated"),
+        })
+
+    astronaut_status_df = (
+        pd.DataFrame(astro_rows, columns=list(STATUS_COLUMNS))
+        if astro_rows
+        else pd.DataFrame(columns=list(STATUS_COLUMNS))
+    )
+
+    # Mapear severity de los eventos de español a inglés para coherencia de la API.
+    events_df: pd.DataFrame = raw["events_df"].copy()
+    if not events_df.empty and "severity" in events_df.columns:
+        events_df["severity"] = events_df["severity"].map(
+            lambda s: _SEVERITY_EN.get(s, s)
+        )
+    # Garantizar el orden de columnas exacto que esperan los tests.
+    events_df = events_df.reindex(columns=list(EVENT_COLUMNS))
+
+    crew_summary = raw.get("crew_summary", {})
+
+    return DiagnosticResult(
+        astronaut_status=astronaut_status_df,
+        events=events_df,
+        crew_summary=crew_summary,
+    )
