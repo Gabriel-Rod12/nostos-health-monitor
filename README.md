@@ -108,10 +108,11 @@ Cada alerta deberá incluir:
 - Acción preventiva o recomendación correspondiente.
 
 Las alertas se clasificarán mediante un sistema visual de tres niveles:
-
-- **Verde — Normal:** parámetros dentro de los criterios establecidos.
-- **Amarillo — Precaución:** valores que requieren seguimiento o atención.
-- **Rojo — Crítico:** anomalías que requieren atención prioritaria.
+| Nivel de alerta | Clasificación | Descripción |
+|---|---|---|
+| 🟢 | **Verde — Normal** | Parámetros dentro de los criterios establecidos. |
+| 🟡 | **Amarillo — Precaución** | Valores que requieren seguimiento o atención. |
+| 🔴 | **Rojo — Crítico** | Anomalías que requieren atención prioritaria. |
 
 10. Historial de eventos de salud
 
@@ -132,4 +133,29 @@ Las gráficas permitirán:
 - Mantener los registros históricos durante las actualizaciones de la simulación.
 
 Estas visualizaciones complementarán los paneles de monitoreo y facilitarán la interpretación de la información presentada por el sistema.
+
+### 8. Panel de bienestar psicológico
+
+Permite realizar un seguimiento de indicadores relacionados con el bienestar psicológico de cada astronauta mediante una encuesta o prueba de autopercepción, diseñada para recopilar información sobre su estado emocional y descanso durante la misión.
+
+La evaluación contempla los siguientes indicadores:
+
+- Nivel de estrés percibido, en una escala de 0 a 10.
+- Estado de ánimo, en una escala de 0 a 10.
+- Horas de sueño durante las últimas 24 horas.
+
+La encuesta permite recopilar las respuestas de cada astronauta y utilizar esa información para representar su estado de bienestar psicológico, identificar posibles cambios y observar tendencias a lo largo del tiempo.
+
+Los resultados tienen fines de seguimiento y simulación. No constituyen un diagnóstico psicológico ni sustituyen una evaluación realizada por un profesional de la salud mental.
+
+## Fuentes científicas y referencias de la NASA
+
+| Fuente NASA | Qué aporta | Cómo se utiliza en el proyecto |
+|---|---|---|
+| **Hazard: Gravity Fields** | Describe los efectos de los diferentes campos gravitatorios, incluyendo los de Marte, sobre el organismo. Aborda la pérdida de masa ósea, estimada en determinados contextos espaciales entre un 1 % y un 1,5 % mensual, y los riesgos asociados, como la formación de cálculos renales. | Justifica la consideración de diferentes condiciones gravitatorias en los escenarios de simulación y el seguimiento de indicadores relacionados con la salud ósea. |
+| **Risk of Spaceflight-Induced Bone Changes** | Expone los cambios óseos asociados al vuelo espacial, especialmente la pérdida de masa ósea en zonas como la columna vertebral y la cadera. También aborda contramedidas como el ejercicio de resistencia, los escaneos óseos y el uso de determinados tratamientos. | Fundamenta la importancia del seguimiento musculoesquelético y la inclusión de indicadores estimados de riesgo de deterioro óseo. |
+| **Risk of Reduced Cardiorespiratory and Musculoskeletal Fitness** | Analiza los efectos de las misiones espaciales sobre la condición cardiorrespiratoria y musculoesquelética. Considera las rutinas de ejercicio en la Estación Espacial Internacional, las limitaciones de espacio en futuras naves y la variabilidad de respuesta entre astronautas. | Justifica el monitoreo de la actividad física, el entrenamiento de resistencia y los indicadores cardiovasculares y musculares de cada astronauta. |
+| **CIPHER (Complement of Integrated Protocols for Human Exploration Research)** | Programa de investigación que reúne 14 estudios para analizar la respuesta humana a los vuelos espaciales. Incluye evaluaciones de calcio en sangre y orina, imágenes tridimensionales del hueso (TBone2) y el uso de prendas inteligentes para registrar indicadores como frecuencia cardíaca y respiración. | Sirve como referencia para la selección de biomarcadores, la validación de indicadores y la posibilidad de integrar dispositivos vestibles en futuras versiones de NOSTOS. |
+
+
 
