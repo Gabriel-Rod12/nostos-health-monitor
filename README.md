@@ -1,18 +1,4 @@
-###  Panel de bienestar psicológico
 
-<<<<<<< HEAD
-Permite realizar un seguimiento de indicadores relacionados con el bienestar psicológico de cada astronauta mediante una encuesta o prueba de autopercepción, diseñada para recopilar información sobre su estado emocional y descanso durante la misión.
-
-La evaluación contempla los siguientes indicadores:
-
-- Nivel de estrés percibido, en una escala de 0 a 10.
-- Estado de ánimo, en una escala de 0 a 10.
-- Horas de sueño durante las últimas 24 horas.
-
-La encuesta permite recopilar las respuestas de cada astronauta y utilizar esa información para representar su estado de bienestar psicológico, identificar posibles cambios y observar tendencias a lo largo del tiempo.
-
-Los resultados tienen fines de seguimiento y simulación. No constituyen un diagnóstico psicológico ni sustituyen una evaluación realizada por un profesional de la salud mental.
-=======
 ## Descripción del proyecto
 
 NOSTOS es una aplicación web concebida para vigilar de manera integral la salud física y psicológica de los tripulantes durante misiones espaciales de larga duración, ya sea a bordo de estaciones orbitales o en las futuras bases de exploración en Marte.
