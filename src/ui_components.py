@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 import pandas as pd
+from src.diagnostics import COUNTERMEASURE_TARGETS
 
 
 ASTRONAUT_IDS = ("AST-01", "AST-02", "AST-03")
@@ -258,11 +259,11 @@ def _detail_metric_reference(metric: str, environment: str, scenario: str) -> st
     if metric in references:
         return references[metric]
     if metric == "exercise_minutes_24h":
-        target = 90 if environment == "station" else 60
-        return f"Objetivo operativo simulado: ≥{target} min/24 h"
+        target = COUNTERMEASURE_TARGETS[environment][metric]
+        return f"Objetivo operativo simulado: ≥{target:g} min/24 h"
     if metric == "resistance_training_minutes_24h":
-        target = 45 if environment == "station" else 30
-        return f"Objetivo operativo simulado: ≥{target} min/24 h"
+        target = COUNTERMEASURE_TARGETS[environment][metric]
+        return f"Objetivo operativo simulado: ≥{target:g} min/24 h"
     return _metric_range(metric, scenario)
 
 
@@ -396,11 +397,11 @@ def _chart_reference_band(
     if metric == "activity_score_0_100":
         return 0, 100, "escala 0–100 · no es un rango seguro", "#8292a6"
     if metric == "exercise_minutes_24h":
-        target = 90 if environment == "station" else 60
-        return target, 180, f"meta operativa simulada: ≥{target} min/24 h", "#36c98f"
+        target = COUNTERMEASURE_TARGETS[environment][metric]
+        return target, 180, f"meta operativa simulada: ≥{target:g} min/24 h", "#36c98f"
     if metric == "resistance_training_minutes_24h":
-        target = 45 if environment == "station" else 30
-        return target, 120, f"meta operativa simulada: ≥{target} min/24 h", "#36c98f"
+        target = COUNTERMEASURE_TARGETS[environment][metric]
+        return target, 120, f"meta operativa simulada: ≥{target:g} min/24 h", "#36c98f"
     if metric == "body_fat_pct":
         baseline = float(history["body_fat_pct"].head(3).mean())
         low = max(8.0, baseline - 2.5)

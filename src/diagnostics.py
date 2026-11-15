@@ -62,6 +62,19 @@ EVENT_COLUMNS: tuple = (
     "recommended_action",
 )
 
+# Metas diarias operativas para contramedidas. Son criterios de simulación,
+# no umbrales clínicos ni protocolos espaciales aprobados.
+COUNTERMEASURE_TARGETS: Dict[str, Dict[str, float]] = {
+    "station": {
+        "exercise_minutes_24h": 60.0,
+        "resistance_training_minutes_24h": 30.0,
+    },
+    "mars": {
+        "exercise_minutes_24h": 60.0,
+        "resistance_training_minutes_24h": 30.0,
+    },
+}
+
 # Columnas del DataFrame de estado por astronauta devuelto por evaluate_readings.
 STATUS_COLUMNS: tuple = (
     "astronaut_id",
@@ -474,8 +487,9 @@ def calculate_bone_risk_index(
     environment: str,
 ) -> float:
     """Calcula el Índice Estimado de Riesgo de Deterioro Óseo (0–100, estimación simulada)."""
-    target_total = 90.0 if environment == "station" else 60.0
-    target_res = 45.0 if environment == "station" else 30.0
+    targets = COUNTERMEASURE_TARGETS[environment]
+    target_total = targets["exercise_minutes_24h"]
+    target_res = targets["resistance_training_minutes_24h"]
     gravity_factor = 1.0 if environment == "station" else 0.65
 
     if len(astro_history) >= 3:
@@ -513,21 +527,14 @@ def evaluate_bone_health(
     ex_min = float(row["exercise_minutes_24h"])
     res_min = float(row["resistance_training_minutes_24h"])
 
-    min_res_green = 45.0 if environment == "station" else 30.0
-    min_res_yellow = 20.0 if environment == "station" else 15.0
-    min_ex_green = 90.0 if environment == "station" else 60.0
-    min_ex_yellow = 45.0 if environment == "station" else 30.0
+    targets = COUNTERMEASURE_TARGETS[environment]
+    min_res_green = targets["resistance_training_minutes_24h"]
+    min_ex_green = targets["exercise_minutes_24h"]
 
-    if res_min < min_res_yellow:
-        sev = "Rojo"
-        ref = f">= {min_res_green:.0f} min/24h en {environment} [NASA HRP ARED + umbral simulado]"
-        exp = f"Adherencia crítica a ejercicios de resistencia ({res_min:.0f} min/24h)."
-        rec = "Priorizar sesión de ejercicio resistivo en el próximo bloque de rutina."
-        protocol_keys.append("DEFICIT_CONTRAMEDIDAS_OSEAS")
-    elif res_min < min_res_green:
+    if res_min < min_res_green:
         sev = "Amarillo"
-        ref = f">= {min_res_green:.0f} min/24h en {environment} [Criterio simulado]"
-        exp = f"Entrenamiento resistivo por debajo de la meta diaria ({res_min:.0f} min/24h)."
+        ref = f"Meta operativa simulada: >= {min_res_green:.0f} min/24h en {environment}. El déficit aislado requiere seguimiento, no una alerta crítica."
+        exp = f"Entrenamiento resistivo por debajo de la meta operativa simulada ({res_min:.0f} min/24h)."
         rec = "Completar 15–20 minutos adicionales de ejercicios de fuerza resistiva."
         protocol_keys.append("DEFICIT_CONTRAMEDIDAS_OSEAS")
     else:
@@ -540,16 +547,10 @@ def evaluate_bone_health(
             _build_event(ts, astro_id, area, "resistance_training_minutes_24h", round(res_min, 1), "min", sev, ref, exp, rec)
         )
 
-    if ex_min < min_ex_yellow:
-        sev = "Rojo"
-        ref = f">= {min_ex_green:.0f} min/24h en {environment} [Criterio simulado]"
-        exp = f"Déficit severo de ejercicio físico diario ({ex_min:.0f} min/24h)."
-        rec = "Reprogramar bloque obligatorio de ejercicio aeróbico y resistivo."
-        protocol_keys.append("DEFICIT_CONTRAMEDIDAS_OSEAS")
-    elif ex_min < min_ex_green:
+    if ex_min < min_ex_green:
         sev = "Amarillo"
-        ref = f">= {min_ex_green:.0f} min/24h en {environment} [Criterio simulado]"
-        exp = f"Tiempo de ejercicio diario inferior al objetivo recomendado ({ex_min:.0f} min/24h)."
+        ref = f"Meta operativa simulada: >= {min_ex_green:.0f} min/24h en {environment}. El déficit aislado requiere seguimiento, no una alerta crítica."
+        exp = f"Tiempo de ejercicio por debajo de la meta operativa simulada ({ex_min:.0f} min/24h)."
         rec = "Incrementar actividad física para alcanzar la meta diaria."
         protocol_keys.append("DEFICIT_CONTRAMEDIDAS_OSEAS")
     else:
@@ -561,11 +562,12 @@ def evaluate_bone_health(
         events.append(_build_event(ts, astro_id, area, "exercise_minutes_24h", round(ex_min, 1), "min", sev, ref, exp, rec))
 
     bone_risk_index = calculate_bone_risk_index(row, astro_history, environment)
-    if bone_risk_index > 60.0:
-        area_status = _max_severity(area_status, "Rojo")
-        protocol_keys.append("DEFICIT_CONTRAMEDIDAS_OSEAS")
-    elif bone_risk_index >= 30.0:
+    # Este índice se deriva de actividad simulada y carece de validación clínica.
+    # Por sí solo nunca eleva el estado a crítico.
+    if bone_risk_index >= 30.0:
         area_status = _max_severity(area_status, "Amarillo")
+        if "DEFICIT_CONTRAMEDIDAS_OSEAS" not in protocol_keys:
+            protocol_keys.append("DEFICIT_CONTRAMEDIDAS_OSEAS")
 
     return area_status, events, recommendations, protocol_keys, bone_risk_index
 

@@ -14,16 +14,26 @@ from src.ui_components import METRICS, render_alerts, render_astronaut_cards, re
 
 
 st.set_page_config(page_title="NOSTOS | Salud de la tripulación", page_icon="🛰️", layout="wide")
+TELEMETRY_SIMULATION_VERSION = 2
 
 
 @st.dialog("Estado de la tripulación", width="large")
 def show_crew_status_dialog(events: pd.DataFrame, statuses: pd.DataFrame) -> None:
     if events.empty:
-        nominal = int((statuses["status"] == "normal").sum()) if not statuses.empty else 0
-        if nominal == 3:
+        attention = statuses.loc[statuses["status"] != "normal"] if not statuses.empty else statuses
+        if attention.empty and len(statuses) == 3:
             st.success("No hay alertas activas. Todos los tripulantes están en nivel nominal.")
-        else:
+            return
+        if attention.empty:
             st.info("No hay alertas activas en este momento.")
+            return
+        st.caption("Estado actual de los tripulantes que requieren seguimiento:")
+        for _, astronaut in attention.iterrows():
+            message = f"{astronaut['astronaut_id']} · {astronaut['status_label']}"
+            if astronaut["status"] == "critical":
+                st.error(message)
+            else:
+                st.warning(message)
         return
     st.caption(f"{len(events)} alerta(s) activa(s)")
     alert_columns = st.columns(2)
@@ -66,6 +76,18 @@ with st.sidebar:
     scenario = {"Reposo": "rest", "Actividad física / EVA": "eva", "Emergencia simulada": "emergency"}[scenario_label]
     refresh_seconds = st.selectbox("Frecuencia de actualización", (5, 15, 30, 60), index=2, format_func=lambda value: f"Cada {value} s")
     st.caption(f"Configuración: `{environment}` · `{scenario}` · {refresh_seconds} s")
+
+# Discard session readings made by the previous simulator, where selecting
+# rest reset 24-hour exercise totals to very low per-scenario values.
+if st.session_state.get("telemetry_simulation_version") != TELEMETRY_SIMULATION_VERSION:
+    st.session_state.telemetry_history_by_environment = {}
+    st.session_state.telemetry_update_number = 0
+    st.session_state.diagnostic_events_by_environment = {}
+    st.session_state.diagnostic_status_by_environment = {}
+    st.session_state.current_events_by_environment = {}
+    st.session_state.last_telemetry_at_utc = None
+    st.session_state.telemetry_latency_seconds = None
+    st.session_state.telemetry_simulation_version = TELEMETRY_SIMULATION_VERSION
 
 if "telemetry_history_by_environment" not in st.session_state:
     st.session_state.telemetry_history_by_environment = {}
@@ -123,9 +145,22 @@ def render_telemetry_header() -> None:
     current_events = st.session_state.current_events_by_environment[environment]
     current_status = st.session_state.diagnostic_status_by_environment[environment]
     active_alerts = len(current_events)
+    statuses = set(current_status["status"]) if not current_status.empty else set()
+    severities = set(current_events["severity"].astype(str)) if not current_events.empty else set()
+    if "critical" in statuses or "Rojo" in severities:
+        button_state = "critical"
+    elif "precaution" in statuses or "Amarillo" in severities:
+        button_state = "precaution"
+    else:
+        button_state = "nominal"
+
     if active_alerts:
         alert_label = "ALERTA ACTIVA" if active_alerts == 1 else "ALERTAS ACTIVAS"
         crew_summary = f"{active_alerts} {alert_label}"
+    elif button_state == "critical":
+        crew_summary = "TRIPULACIÓN EN ESTADO CRÍTICO"
+    elif button_state == "precaution":
+        crew_summary = "TRIPULACIÓN EN PRECAUCIÓN"
     else:
         nominal = int((current_status["status"] == "normal").sum()) if not current_status.empty else 0
         crew_summary = f"{nominal}/3 TRIPULANTES NOMINALES" if nominal else "EVALUANDO TRIPULACIÓN"
@@ -143,12 +178,21 @@ def render_telemetry_header() -> None:
             st.markdown("**RESUMEN DE TRIPULACIÓN**")
             if active_alerts:
                 button_label = f"{crew_summary} · VER DETALLE"
-            elif current_status.empty:
-                button_label = f"{crew_summary} · VER ESTADO"
             else:
                 button_label = f"{crew_summary} · VER ESTADO"
-            if st.button(button_label, key=f"crew_status_{environment}", type="primary", use_container_width=True):
-                show_crew_status_dialog(current_events, current_status)
+            st.markdown(
+                """
+                <style>
+                .st-key-crew-alert-nominal button {background:#168447!important;border-color:#168447!important;color:#fff!important}
+                .st-key-crew-alert-precaution button {background:#c58a00!important;border-color:#c58a00!important;color:#fff!important}
+                .st-key-crew-alert-critical button {background:#c93636!important;border-color:#c93636!important;color:#fff!important}
+                </style>
+                """,
+                unsafe_allow_html=True,
+            )
+            with st.container(key=f"crew-alert-{button_state}"):
+                if st.button(button_label, key=f"crew_status_{environment}", type="primary", use_container_width=True):
+                    show_crew_status_dialog(current_events, current_status)
 
 
 render_telemetry_header()
