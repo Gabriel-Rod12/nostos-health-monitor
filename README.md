@@ -1,4 +1,3 @@
-
 ## Descripción del proyecto
 
 NOSTOS es una aplicación web concebida para vigilar de manera integral la salud física y psicológica de los tripulantes durante misiones espaciales de larga duración, ya sea a bordo de estaciones orbitales o en las futuras bases de exploración en Marte.
@@ -6,6 +5,88 @@ NOSTOS es una aplicación web concebida para vigilar de manera integral la salud
 A través de un panel de control centralizado, el sistema permite visualizar, evaluar y registrar los principales indicadores biomédicos y de bienestar de una tripulación simulada de tres astronautas. De este modo, facilita tanto el seguimiento individual como la observación del estado general del equipo, la detección temprana de posibles anomalías y la emisión de alertas visuales acompañadas de recomendaciones preventivas.
 
 La aplicación contempla cuatro áreas principales de monitoreo: sistema cardiovascular, salud ósea, composición muscular y bienestar psicológico. Para ello, utiliza datos biomédicos simulados que permiten representar distintos escenarios operativos, como períodos de reposo, actividad física y situaciones de emergencia controlada
+
+## Ejecución local
+
+### Requisitos
+
+- Python instalado.
+- Git instalado para clonar el repositorio.
+- Una terminal abierta en la carpeta del proyecto.
+
+### 1. Entrar a la carpeta
+
+```bash
+cd ruta/a/nostos-health-monitor
+```
+
+Si ya tienes el proyecto abierto en Visual Studio Code, abre una terminal integrada y confirma que estás en la carpeta del proyecto.
+
+### 2. Crear un entorno virtual
+
+**Windows (PowerShell):**
+
+```powershell
+python -m venv .venv
+```
+
+Si el comando `python` no funciona, prueba:
+
+```powershell
+py -m venv .venv
+```
+
+### 3. Activar el entorno virtual
+
+**Windows (PowerShell):**
+
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+Si PowerShell bloquea la activación, puedes usar el entorno sin activarlo:
+
+```powershell
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+.venv\Scripts\python.exe -m streamlit run app.py
+```
+
+### 4. Instalar las dependencias
+
+Con el entorno virtual activado:
+
+```powershell
+python -m pip install -r requirements.txt
+```
+
+### 5. Iniciar la aplicación
+
+```powershell
+python -m streamlit run app.py
+```
+
+Streamlit mostrará una dirección local en la terminal. Ábrela en el navegador; normalmente es:
+
+```text
+http://localhost:8501
+```
+
+### Detener la aplicación
+
+En la terminal donde está ejecutándose, pulsa:
+
+```text
+Ctrl+C
+```
+
+### Siguientes ejecuciones
+
+Cuando ya hayas creado el entorno e instalado las dependencias, solo necesitas activar el entorno y ejecutar la aplicación:
+
+```powershell
+.venv\Scripts\Activate.ps1
+python -m streamlit run app.py
+```
 
 ### Plantemiento de la problematica 
 
