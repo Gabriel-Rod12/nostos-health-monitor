@@ -7,7 +7,7 @@ datos compartido. La evaluación de alertas corresponde a ``diagnostics.py``.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Iterable, Literal
 
@@ -41,6 +41,12 @@ VITAL_COLUMNS: tuple[str, ...] = (
     "stress_score_0_10",
     "mood_score_0_10",
 )
+
+NUMERIC_COLUMNS: tuple[str, ...] = tuple(
+    column for column in VITAL_COLUMNS
+    if column not in {"timestamp", "astronaut_id", "environment", "scenario"}
+)
+DEFAULT_HISTORY_PATH = Path(__file__).resolve().parents[1] / "data" / "astronaut_vitals.csv"
 
 # Perfiles deliberadamente sintéticos. Mantienen diferencias individuales sin
 # pretender describir a personas reales ni rangos de referencia médica.
@@ -111,8 +117,20 @@ def validate_telemetry(frame: pd.DataFrame, *, require_all_astronauts: bool = Fa
         raise ValueError("environment must be 'station' or 'mars'.")
     if not frame["scenario"].isin(SCENARIOS).all():
         raise ValueError("scenario must be 'rest', 'eva', or 'emergency'.")
-    if require_all_astronauts and set(frame["astronaut_id"]) != set(ASTRONAUT_IDS):
-        raise ValueError("An update must contain exactly AST-01, AST-02, and AST-03.")
+    try:
+        timestamps = pd.to_datetime(frame["timestamp"], utc=True, errors="raise")
+    except (TypeError, ValueError) as exc:
+        raise ValueError("timestamp must contain valid UTC-convertible datetimes.") from exc
+    if timestamps.isna().any():
+        raise ValueError("timestamp cannot be missing.")
+    for column in NUMERIC_COLUMNS:
+        numeric = pd.to_numeric(frame[column], errors="coerce")
+        invalid = frame[column].notna() & (numeric.isna() | ~np.isfinite(numeric))
+        if invalid.any():
+            raise ValueError(f"{column} must contain finite numeric values or missing data.")
+    if require_all_astronauts:
+        if len(frame) != len(ASTRONAUT_IDS) or set(frame["astronaut_id"]) != set(ASTRONAUT_IDS):
+            raise ValueError("An update must contain exactly one reading for AST-01, AST-02, and AST-03.")
 
 
 def simulate_update(
@@ -200,6 +218,15 @@ def load_history(path: str | Path) -> pd.DataFrame:
     validate_telemetry(frame)
     frame["timestamp"] = pd.to_datetime(frame["timestamp"], utc=True)
     return frame.loc[:, VITAL_COLUMNS]
+
+
+def load_default_history() -> pd.DataFrame:
+    """Load the versioned sample history shipped in ``data/astronaut_vitals.csv``.
+
+    The dashboard may use this fixture for demos or tests. Live session history
+    remains in memory and should be extended with :func:`append_update`.
+    """
+    return load_history(DEFAULT_HISTORY_PATH)
 
 
 def append_update(history: pd.DataFrame, update: pd.DataFrame) -> pd.DataFrame:
