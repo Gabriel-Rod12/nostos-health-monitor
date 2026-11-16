@@ -1,5 +1,9 @@
 # Nostos
 
+## Aplicación web
+
+Puedes abrir NOSTOS desde el navegador sin instalar dependencias ni ejecutar el proyecto localmente: [Abrir NOSTOS](https://nostos-health-monitor.streamlit.app).
+
 ## Descripción del proyecto
 
 NOSTOS es una aplicación web concebida para vigilar de manera integral la salud física y psicológica de los tripulantes durante misiones espaciales de larga duración, ya sea a bordo de estaciones orbitales o en las futuras bases de exploración en Marte.
