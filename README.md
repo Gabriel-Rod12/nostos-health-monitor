@@ -1,3 +1,8 @@
+# Nostos
+
+## Aplicación web
+
+Puedes abrir NOSTOS desde el navegador sin instalar dependencias ni ejecutar el proyecto localmente: [Abrir NOSTOS](https://nostos-health-monitor.streamlit.app).
 
 ## Descripción del proyecto
 
@@ -5,9 +10,9 @@ NOSTOS es una aplicación web concebida para vigilar de manera integral la salud
 
 A través de un panel de control centralizado, el sistema permite visualizar, evaluar y registrar los principales indicadores biomédicos y de bienestar de una tripulación simulada de tres astronautas. De este modo, facilita tanto el seguimiento individual como la observación del estado general del equipo, la detección temprana de posibles anomalías y la emisión de alertas visuales acompañadas de recomendaciones preventivas.
 
-La aplicación contempla cuatro áreas principales de monitoreo: sistema cardiovascular, salud ósea, composición muscular y bienestar psicológico. Para ello, utiliza datos biomédicos simulados que permiten representar distintos escenarios operativos, como períodos de reposo, actividad física y situaciones de emergencia controlada
+La aplicación contempla cuatro áreas principales de monitoreo: sistema cardiovascular, salud ósea, composición muscular y bienestar psicológico. Para ello, utiliza datos biomédicos simulados que permiten representar distintos escenarios operativos, como períodos de reposo, actividad física y situaciones de emergencia controlada.
 
-### Plantemiento de la problematica 
+## Planteamiento de la problemática
 
 Las misiones espaciales de larga duración exponen a los astronautas a condiciones como la microgravedad, la radiación, el confinamiento y el aislamiento, que pueden provocar alteraciones progresivas en su salud cardiovascular, ósea, muscular y psicológica.
 
@@ -17,19 +22,109 @@ Entre las principales dificultades se encuentran la fragmentación de la informa
 
 Ante esta situación, surge NOSTOS, una propuesta de monitoreo integral que busca centralizar la información física y psicológica de la tripulación, facilitar la identificación de posibles anomalías y generar alertas y recomendaciones preventivas mediante una interfaz visual e intuitiva.
 
+## Ejecución local
+
+### Requisitos
+
+- Python instalado.
+- Git instalado para clonar el repositorio.
+- Una terminal abierta en la carpeta del proyecto.
+
+### 1. Entrar a la carpeta
+
+```bash
+cd ruta/a/nostos-health-monitor
+```
+
+Si ya tienes el proyecto abierto en Visual Studio Code, abre una terminal integrada y confirma que estás en la carpeta del proyecto.
+
+### 2. Crear un entorno virtual
+
+**Windows (PowerShell):**
+
+```powershell
+python -m venv .venv
+```
+
+Si el comando `python` no funciona, prueba:
+
+```powershell
+py -m venv .venv
+```
+
+### 3. Activar el entorno virtual
+
+**Windows (PowerShell):**
+
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+Si PowerShell bloquea la activación, puedes usar el entorno sin activarlo:
+
+```powershell
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+.venv\Scripts\python.exe -m streamlit run app.py
+```
+
+### 4. Instalar las dependencias
+
+Con el entorno virtual activado:
+
+```powershell
+python -m pip install -r requirements.txt
+```
+
+### 5. Iniciar la aplicación
+
+```powershell
+python -m streamlit run app.py
+```
+
+Streamlit mostrará una dirección local en la terminal. Ábrela en el navegador; normalmente es:
+
+```text
+http://localhost:8501
+```
+
+### Detener la aplicación
+
+En la terminal donde está ejecutándose, pulsa:
+
+```text
+Ctrl+C
+```
+
+### Siguientes ejecuciones
+
+Cuando ya hayas creado el entorno e instalado las dependencias, solo necesitas activar el entorno y ejecutar la aplicación:
+
+```powershell
+.venv\Scripts\Activate.ps1
+python -m streamlit run app.py
+```
+
 ## Funcionalidades principales
 
 NOSTOS contará con los siguientes módulos funcionales, diseñados para facilitar la supervisión, evaluación y seguimiento de las condiciones de salud de la tripulación durante las misiones espaciales.
 
- 1. Panel general de tripulación
+### 1. Panel general de tripulación
 
 Proporciona una vista centralizada del estado de salud de los tres astronautas (AST-01, AST-02 y AST-03). Permite visualizar simultáneamente sus indicadores principales, identificar posibles anomalías y reconocer rápidamente qué integrantes requieren atención.
 
-2. Selector de astronautas
+<p align="center">
+  <img src="docs/images/Panel%20General.png" alt="Panel general de NOSTOS con las tarjetas de los tres astronautas y el resumen de misión" width="1000">
+</p>
+
+### 2. Selector de astronautas
 
 Permite seleccionar individualmente a cada integrante de la tripulación para consultar su información biomédica, estado de salud, indicadores específicos y registros históricos. Cada astronauta dispone de un perfil independiente, con sus propias lecturas y eventos registrados.
 
- 3. Selector de ambiente operativo
+<p align="center">
+  <img src="docs/images/Ficha%20de%20astronauta.png" alt="Ficha individual con métricas de salud del astronauta" width="1000">
+</p>
+
+### 3. Selector de ambiente operativo
 
 Permite alternar entre los dos entornos contemplados por el sistema:
 
@@ -38,7 +133,7 @@ Permite alternar entre los dos entornos contemplados por el sistema:
 
 La selección del ambiente permite adaptar los escenarios y criterios de simulación al contexto operativo correspondiente.
 
-4. Selector de escenarios de simulación
+### 4. Selector de escenarios de simulación
 
 Permite configurar las condiciones bajo las cuales se generan los datos biomédicos de la tripulación:
 
@@ -48,13 +143,17 @@ Permite configurar las condiciones bajo las cuales se generan los datos biomédi
 
 Los escenarios estarán diseñados para producir resultados reproducibles y facilitar las pruebas funcionales del sistema.
 
- 5. Selector de frecuencia de actualización
+### 5. Selector de frecuencia de actualización
 
 Permite configurar el intervalo de actualización de los datos simulados mediante cuatro opciones: 5, 15, 30 y 60 segundos. La frecuencia predeterminada será de 30 segundos, equivalente a dos actualizaciones por minuto.
 
 El sistema deberá conservar el historial de lecturas durante las actualizaciones y evitar cambios bruscos en variables que presentan una evolución fisiológica más lenta, como la composición corporal y el sueño acumulado.
 
- 6. Panel de monitoreo cardiovascular
+<p align="center">
+  <img src="docs/images/Configuracion%20de%20la%20mision.png" alt="Controles para elegir ambiente, escenario y frecuencia de actualización" width="320">
+</p>
+
+### 6. Panel de monitoreo cardiovascular
 
 Presenta los principales indicadores relacionados con el funcionamiento del sistema cardiovascular de cada astronauta:
 
@@ -65,7 +164,7 @@ Presenta los principales indicadores relacionados con el funcionamiento del sist
 
 Permite observar los valores registrados, identificar desviaciones respecto a los criterios de referencia y visualizar su evolución mediante indicadores y gráficas.
 
- 7. Panel de seguimiento óseo y muscular
+### 7. Panel de seguimiento óseo y muscular
 
 Integra indicadores relacionados con la actividad física y la composición corporal para facilitar el seguimiento de las condiciones musculoesqueléticas de la tripulación.
 
@@ -80,7 +179,7 @@ Incluye:
 
 Los indicadores de salud ósea serán estimaciones simuladas basadas en variables de actividad y ejercicio, ya que el sistema no dispone de mediciones directas de densidad mineral ósea. Las variaciones de composición corporal deberán mantener una evolución gradual y coherente.
 
- 8. Panel de bienestar psicológico
+### 8. Panel de bienestar psicológico
 
 Permite realizar un seguimiento de indicadores relacionados con el bienestar psicológico de cada astronauta mediante registros de autopercepción y descanso.
 
@@ -92,7 +191,13 @@ Incluye:
 
 La información permitirá observar tendencias y variaciones en el bienestar individual durante la misión, sin utilizarse para establecer diagnósticos de trastornos psicológicos.
 
- 9. Centro de alertas y recomendaciones
+La aplicación incluye un check-in de diez preguntas de autopercepción. Las respuestas se pueden revisar desde la ficha del astronauta y se conservan durante la sesión actual; no constituyen un diagnóstico psicológico.
+
+<p align="center">
+  <img src="docs/images/Check-in%20de%20bienestar%20psicologico.png" alt="Formulario de check-in de bienestar psicológico" width="1000">
+</p>
+
+### 9. Centro de alertas y recomendaciones
 
 Centraliza las anomalías identificadas por el motor de diagnóstico y presenta información sobre los parámetros que requieren atención.
 
@@ -107,20 +212,25 @@ Cada alerta deberá incluir:
 - Acción preventiva o recomendación correspondiente.
 
 Las alertas se clasificarán mediante un sistema visual de tres niveles:
-
 | Nivel de alerta | Clasificación | Descripción |
 |---|---|---|
 | 🟢 | **Verde — Normal** | Parámetros dentro de los criterios establecidos. |
 | 🟡 | **Amarillo — Precaución** | Valores que requieren seguimiento o atención. |
 | 🔴 | **Rojo — Crítico** | Anomalías que requieren atención prioritaria. |
 
-10. Historial de eventos de salud
+Desde el resumen de tripulación se abre la ventana emergente con las alertas. Cada alerta permite consultar recomendaciones y registrar el seguimiento por parte del astronauta, otro tripulante o el equipo médico en tierra.
+
+<p align="center">
+  <img src="docs/images/Estado%20de%20la%20tripulacion.png" alt="Ventana emergente con alertas de la tripulación y acceso a recomendaciones" width="1000">
+</p>
+
+### 10. Historial de eventos de salud
 
 Permite consultar los eventos registrados durante la simulación, incluyendo lecturas relevantes, anomalías detectadas y alertas generadas.
 
 El historial estará organizado por astronauta y fecha, facilitando la revisión de acontecimientos anteriores, la identificación de patrones y el seguimiento de la evolución de los indicadores durante la misión.
 
-11. Gráficas y visualización de tendencias
+### 11. Gráficas y visualización de tendencias
 
 Proporciona representaciones gráficas interactivas de los indicadores biomédicos para facilitar el análisis de su comportamiento a lo largo del tiempo.
 
@@ -134,17 +244,34 @@ Las gráficas permitirán:
 
 Estas visualizaciones complementarán los paneles de monitoreo y facilitarán la interpretación de la información presentada por el sistema.
 
+### 12. Reportes de salud
 
-###  Panel de bienestar psicológico
+Desde la parte inferior de cada ficha se puede generar un reporte de las últimas 24 horas, una semana o un mes. Presenta las lecturas agrupadas por sistema, estadísticas del periodo, alertas y el check-in más reciente; también permite consultar el detalle de las mediciones disponibles.
 
-Permite realizar un seguimiento de indicadores relacionados con el bienestar psicológico de cada astronauta mediante una encuesta o prueba de autopercepción, diseñada para recopilar información sobre su estado emocional y descanso durante la misión.
+<p align="center">
+  <img src="docs/images/Reporte%20del%20astronauta.png" alt="Reporte de salud del astronauta con periodo e indicadores agrupados" width="1000">
+</p>
 
-La evaluación contempla los siguientes indicadores:
+## Fuentes científicas y referencias de la NASA
 
-- Nivel de estrés percibido, en una escala de 0 a 10.
-- Estado de ánimo, en una escala de 0 a 10.
-- Horas de sueño durante las últimas 24 horas.
+| Fuente NASA | Qué aporta | Cómo se utiliza en el proyecto |
+|---|---|---|
+| **Hazard: Gravity Fields** | Describe los efectos de los diferentes campos gravitatorios, incluyendo los de Marte, sobre el organismo. Aborda la pérdida de masa ósea, estimada en determinados contextos espaciales entre un 1 % y un 1,5 % mensual, y los riesgos asociados, como la formación de cálculos renales. | Justifica la consideración de diferentes condiciones gravitatorias en los escenarios de simulación y el seguimiento de indicadores relacionados con la salud ósea. |
+| **Risk of Spaceflight-Induced Bone Changes** | Expone los cambios óseos asociados al vuelo espacial, especialmente la pérdida de masa ósea en zonas como la columna vertebral y la cadera. También aborda contramedidas como el ejercicio de resistencia, los escaneos óseos y el uso de determinados tratamientos. | Fundamenta la importancia del seguimiento musculoesquelético y la inclusión de indicadores estimados de riesgo de deterioro óseo. |
+| **Risk of Reduced Cardiorespiratory and Musculoskeletal Fitness** | Analiza los efectos de las misiones espaciales sobre la condición cardiorrespiratoria y musculoesquelética. Considera las rutinas de ejercicio en la Estación Espacial Internacional, las limitaciones de espacio en futuras naves y la variabilidad de respuesta entre astronautas. | Justifica el monitoreo de la actividad física, el entrenamiento de resistencia y los indicadores cardiovasculares y musculares de cada astronauta. |
+| **CIPHER (Complement of Integrated Protocols for Human Exploration Research)** | Programa de investigación que reúne 14 estudios para analizar la respuesta humana a los vuelos espaciales. Incluye evaluaciones de calcio en sangre y orina, imágenes tridimensionales del hueso (TBone2) y el uso de prendas inteligentes para registrar indicadores como frecuencia cardíaca y respiración. | Sirve como referencia para la selección de biomarcadores, la validación de indicadores y la posibilidad de integrar dispositivos vestibles en futuras versiones de NOSTOS. |
 
-La encuesta permite recopilar las respuestas de cada astronauta y utilizar esa información para representar su estado de bienestar psicológico, identificar posibles cambios y observar tendencias a lo largo del tiempo.
 
-Los resultados tienen fines de seguimiento y simulación. No constituyen un diagnóstico psicológico ni sustituyen una evaluación realizada por un profesional de la salud mental.
+## Referencias bibliográficas
+
+1. NASA. (2023, October 26). *Hazards of Human Spaceflight | Hazard 4: Gravity Fields*.  
+   https://www.nasa.gov/hrp/hazard-gravity-fields/
+
+2. NASA. (2024, October 23). *Risk of Altered Sensorimotor and Vestibular Function*.  
+   https://www.nasa.gov/reference/risk-of-altered-sensorimotor-and-vestibular-function/
+
+3. NASA. (2024, October 23). *Risk of Reduced Cardiorespiratory and Musculoskeletal Fitness*.  
+   https://www.nasa.gov/reference/risk-of-reduced-cardiorespiratory-and-musculoskeletal-fitness/
+
+4. NASA. (2025, September 11). *How Will Deep Space Travel Affect Artemis Astronauts’ Health and Performance?*  
+   https://www.nasa.gov/reference/archer/
