@@ -6,9 +6,9 @@ NOSTOS es una aplicación web concebida para vigilar de manera integral la salud
 
 A través de un panel de control centralizado, el sistema permite visualizar, evaluar y registrar los principales indicadores biomédicos y de bienestar de una tripulación simulada de tres astronautas. De este modo, facilita tanto el seguimiento individual como la observación del estado general del equipo, la detección temprana de posibles anomalías y la emisión de alertas visuales acompañadas de recomendaciones preventivas.
 
-La aplicación contempla cuatro áreas principales de monitoreo: sistema cardiovascular, salud ósea, composición muscular y bienestar psicológico. Para ello, utiliza datos biomédicos simulados que permiten representar distintos escenarios operativos, como períodos de reposo, actividad física y situaciones de emergencia controlada
+La aplicación contempla cuatro áreas principales de monitoreo: sistema cardiovascular, salud ósea, composición muscular y bienestar psicológico. Para ello, utiliza datos biomédicos simulados que permiten representar distintos escenarios operativos, como períodos de reposo, actividad física y situaciones de emergencia controlada.
 
-### Plantemiento de la problematica 
+### Planteamiento de la problemática
 
 Las misiones espaciales de larga duración exponen a los astronautas a condiciones como la microgravedad, la radiación, el confinamiento y el aislamiento, que pueden provocar alteraciones progresivas en su salud cardiovascular, ósea, muscular y psicológica.
 
@@ -26,9 +26,17 @@ NOSTOS contará con los siguientes módulos funcionales, diseñados para facilit
 
 Proporciona una vista centralizada del estado de salud de los tres astronautas (AST-01, AST-02 y AST-03). Permite visualizar simultáneamente sus indicadores principales, identificar posibles anomalías y reconocer rápidamente qué integrantes requieren atención.
 
+<p align="center">
+  <img src="docs/images/Panel%20General.png" alt="Panel general de NOSTOS con las tarjetas de los tres astronautas y el resumen de misión" width="1000">
+</p>
+
 2. Selector de astronautas
 
 Permite seleccionar individualmente a cada integrante de la tripulación para consultar su información biomédica, estado de salud, indicadores específicos y registros históricos. Cada astronauta dispone de un perfil independiente, con sus propias lecturas y eventos registrados.
+
+<p align="center">
+  <img src="docs/images/Ficha%20de%20astronauta.png" alt="Ficha individual con métricas de salud del astronauta" width="1000">
+</p>
 
  3. Selector de ambiente operativo
 
@@ -54,6 +62,10 @@ Los escenarios estarán diseñados para producir resultados reproducibles y faci
 Permite configurar el intervalo de actualización de los datos simulados mediante cuatro opciones: 5, 15, 30 y 60 segundos. La frecuencia predeterminada será de 30 segundos, equivalente a dos actualizaciones por minuto.
 
 El sistema deberá conservar el historial de lecturas durante las actualizaciones y evitar cambios bruscos en variables que presentan una evolución fisiológica más lenta, como la composición corporal y el sueño acumulado.
+
+<p align="center">
+  <img src="docs/images/Configuracion%20de%20la%20mision.png" alt="Controles para elegir ambiente, escenario y frecuencia de actualización" width="320">
+</p>
 
  6. Panel de monitoreo cardiovascular
 
@@ -93,6 +105,12 @@ Incluye:
 
 La información permitirá observar tendencias y variaciones en el bienestar individual durante la misión, sin utilizarse para establecer diagnósticos de trastornos psicológicos.
 
+La aplicación incluye un check-in de diez preguntas de autopercepción. Las respuestas se pueden revisar desde la ficha del astronauta y se conservan durante la sesión actual; no constituyen un diagnóstico psicológico.
+
+<p align="center">
+  <img src="docs/images/Check-in%20de%20bienestar%20psicologico.png" alt="Formulario de check-in de bienestar psicológico" width="1000">
+</p>
+
  9. Centro de alertas y recomendaciones
 
 Centraliza las anomalías identificadas por el motor de diagnóstico y presenta información sobre los parámetros que requieren atención.
@@ -114,6 +132,12 @@ Las alertas se clasificarán mediante un sistema visual de tres niveles:
 | 🟡 | **Amarillo — Precaución** | Valores que requieren seguimiento o atención. |
 | 🔴 | **Rojo — Crítico** | Anomalías que requieren atención prioritaria. |
 
+Desde el resumen de tripulación se abre la ventana emergente con las alertas. Cada alerta permite consultar recomendaciones y registrar el seguimiento por parte del astronauta, otro tripulante o el equipo médico en tierra.
+
+<p align="center">
+  <img src="docs/images/Estado%20de%20la%20tripulacion.png" alt="Ventana emergente con alertas de la tripulación y acceso a recomendaciones" width="1000">
+</p>
+
 10. Historial de eventos de salud
 
 Permite consultar los eventos registrados durante la simulación, incluyendo lecturas relevantes, anomalías detectadas y alertas generadas.
@@ -134,19 +158,13 @@ Las gráficas permitirán:
 
 Estas visualizaciones complementarán los paneles de monitoreo y facilitarán la interpretación de la información presentada por el sistema.
 
-### 8. Panel de bienestar psicológico
+12. Reportes de salud
 
-Permite realizar un seguimiento de indicadores relacionados con el bienestar psicológico de cada astronauta mediante una encuesta o prueba de autopercepción, diseñada para recopilar información sobre su estado emocional y descanso durante la misión.
+Desde la parte inferior de cada ficha se puede generar un reporte de las últimas 24 horas, una semana o un mes. Presenta las lecturas agrupadas por sistema, estadísticas del periodo, alertas y el check-in más reciente; también permite consultar el detalle de las mediciones disponibles.
 
-La evaluación contempla los siguientes indicadores:
-
-- Nivel de estrés percibido, en una escala de 0 a 10.
-- Estado de ánimo, en una escala de 0 a 10.
-- Horas de sueño durante las últimas 24 horas.
-
-La encuesta permite recopilar las respuestas de cada astronauta y utilizar esa información para representar su estado de bienestar psicológico, identificar posibles cambios y observar tendencias a lo largo del tiempo.
-
-Los resultados tienen fines de seguimiento y simulación. No constituyen un diagnóstico psicológico ni sustituyen una evaluación realizada por un profesional de la salud mental.
+<p align="center">
+  <img src="docs/images/Reporte%20del%20astronauta.png" alt="Reporte de salud del astronauta con periodo e indicadores agrupados" width="1000">
+</p>
 
 ## Fuentes científicas y referencias de la NASA
 
